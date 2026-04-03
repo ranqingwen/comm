@@ -355,7 +355,7 @@
       "state": "uploaded",
       "size": 2590478,
       "digest": "sha256:a69c540fe6959575330bdea150e31eee0c0c204985bf50e3522ce6d292e3c64e",
-      "download_count": 3112,
+      "download_count": 3121,
       "created_at": "2026-03-10T17:22:08Z",
       "updated_at": "2026-03-10T17:22:15Z",
       "browser_download_url": "https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.107.73/AdGuardHome_frontend.tar.gz"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# https://github.com/281677160/build-actions
+# https://github.com/ranqingwen/build-actions
 # common Module by 28677160
 # matrix.target=${FOLDER_NAME}
 
@@ -173,26 +173,26 @@ fi
 if [[ -d "${srcdir}/modules/luci-mod-system" ]]; then
   THEME_BRANCH="Theme2"
   rm -rf "${srcdir}"
-  gitsvn https://github.com/281677160/luci-theme-argon/tree/master "${HOME_PATH}/package/luci-theme-argon"
+  gitsvn https://github.com/ranqingwen/luci-theme-argon/tree/master "${HOME_PATH}/package/luci-theme-argon"
 else
   THEME_BRANCH="Theme1"
   rm -rf "${srcdir}"
-  gitsvn https://github.com/281677160/luci-theme-argon/tree/18.06 "${HOME_PATH}/package/luci-theme-argon"
+  gitsvn https://github.com/ranqingwen/luci-theme-argon/tree/18.06 "${HOME_PATH}/package/luci-theme-argon"
 fi
 
-echo "src-git danshui https://github.com/281677160/openwrt-package.git;$SOURCE" >> "${HOME_PATH}/feeds.conf.default"
-echo "src-git dstheme https://github.com/281677160/openwrt-package.git;$THEME_BRANCH" >> "${HOME_PATH}/feeds.conf.default"
+echo "src-git danshui https://github.com/ranqingwen/openwrt-package.git;$SOURCE" >> "${HOME_PATH}/feeds.conf.default"
+echo "src-git dstheme https://github.com/ranqingwen/openwrt-package.git;$THEME_BRANCH" >> "${HOME_PATH}/feeds.conf.default"
 [[ "${OpenClash_branch}" == "1" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;master" >> "${HOME_PATH}/feeds.conf.default"
 [[ "${OpenClash_branch}" == "2" ]] && echo "src-git OpenClash https://github.com/vernesong/OpenClash.git;dev" >> "${HOME_PATH}/feeds.conf.default"
 
 # 增加中文语言包
 if [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme2" ]]; then
-  gitsvn https://github.com/281677160/common/tree/main/Share/default-settings "${HOME_PATH}/package/default-settings"
+  gitsvn https://github.com/ranqingwen/common/tree/main/Share/default-settings "${HOME_PATH}/package/default-settings"
   grep -qw "libustream-wolfssl" "${HOME_PATH}/include/target.mk" && sed -i 's?\<libustream-wolfssl\>?libustream-openssl?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "dnsmasq-full" "${HOME_PATH}/include/target.mk" && sed -i 's?\<dnsmasq\>?dnsmasq-full?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "default-settings" "${HOME_PATH}/include/target.mk" && sed -i 's?DEFAULT_PACKAGES:=?DEFAULT_PACKAGES:=default-settings?g' "${HOME_PATH}/include/target.mk"
 elif [[ -z "$(find "$HOME_PATH/package" -type d -name "default-settings" -print)" ]] && [[ "${THEME_BRANCH}" == "Theme1" ]]; then
-  gitsvn https://github.com/281677160/common/tree/main/Share/default-setting "${HOME_PATH}/package/default-settings"
+  gitsvn https://github.com/ranqingwen/common/tree/main/Share/default-setting "${HOME_PATH}/package/default-settings"
   grep -qw "libustream-wolfssl" "${HOME_PATH}/include/target.mk" && sed -i 's?\<libustream-wolfssl\>?libustream-openssl?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "dnsmasq-full" "${HOME_PATH}/include/target.mk" && sed -i 's?\<dnsmasq\>?dnsmasq-full?g' "${HOME_PATH}/include/target.mk"
   ! grep -qw "default-settings" "${HOME_PATH}/include/target.mk" && sed -i 's?DEFAULT_PACKAGES:=?DEFAULT_PACKAGES:=default-settings?g' "${HOME_PATH}/include/target.mk"
@@ -213,7 +213,7 @@ fi
 
 # 更新feeds后再次修改补充
 cd ${HOME_PATH}
-z="luci-theme-argon,luci-app-argon-config,luci-theme-Butterfly,luci-theme-netgear,luci-theme-atmaterial, \
+z="luci-theme-argon,luci-theme-Butterfly,luci-theme-netgear,luci-theme-atmaterial, \
 luci-theme-rosy,luci-theme-darkmatter,luci-theme-infinityfreedom,luci-theme-design,luci-app-design-config, \
 luci-theme-bootstrap-mod,luci-theme-freifunk-generic,luci-theme-opentomato,luci-theme-kucat, \
 luci-app-eqos,adguardhome,luci-app-adguardhome,mosdns,luci-app-mosdns,luci-app-openclash, \
@@ -267,7 +267,7 @@ if [[ ! -d "${HOME_PATH}/feeds/packages/lang/rust" ]]; then
 fi
 
 if [[ ! -d "${HOME_PATH}/feeds/packages/devel/packr" ]]; then
-  gitsvn https://github.com/281677160/common/tree/main/Share/packr ${HOME_PATH}/feeds/packages/devel/packr
+  gitsvn https://github.com/ranqingwen/common/tree/main/Share/packr ${HOME_PATH}/feeds/packages/devel/packr
 fi
 
 # files大法，设置固件无烦恼
@@ -368,7 +368,7 @@ if [[ "${REPO_BRANCH}" == "openwrt-19.07" ]]; then
   rm -fr ${HOME_PATH}/feeds/danshui/luci-app-kodexplorer
 fi
 if [[ "${REPO_BRANCH}" =~ (main|master|openwrt-24.10) ]]; then
-  gitsvn https://github.com/281677160/common/blob/main/Share/luci-app-nginx-pingos/Makefile ${HOME_PATH}/feeds/danshui/luci-app-nginx-pingos/Makefile
+  gitsvn https://github.com/ranqingwen/common/blob/main/Share/luci-app-nginx-pingos/Makefile ${HOME_PATH}/feeds/danshui/luci-app-nginx-pingos/Makefile
 fi
 if [[ "${REPO_BRANCH}" == *"23.05"* ]]; then
   gitsvn https://github.com/coolsnowwolf/packages/tree/152022403f0ab2a85063ae1cd9687bd5240fe9b7/net/dnsproxy ${HOME_PATH}/feeds/packages/net/dnsproxy
@@ -384,15 +384,31 @@ function Diy_MT798X() {
 cd ${HOME_PATH}
 }
 
+# --- 强制预埋 iStore 简体中文包函数 ---
+#function Diy_iStore_zh() {
+#    TIME g "开始强制预埋 iStore 简体中文语言包..."
+#    
+#    # 终极方案：直接利用 base-files 核心包的 files 目录预埋，100% 成功率
+#    local I18N_DIR="${HOME_PATH}/package/base-files/files/usr/lib/lua/luci/i18n"
+#    mkdir -p "${I18N_DIR}"
+#    
+#    TIME y "正在从 common 仓库拉取 iStore.zh-cn.lmo..."
+#    wget -qO "${I18N_DIR}/iStore.zh-cn.lmo" "https://raw.githubusercontent.com/ranqingwen/common/main/language/iStore.zh-cn.lmo"
+ #   
+ #   if [ -s "${I18N_DIR}/iStore.zh-cn.lmo" ]; then
+#        TIME g "--> [成功] iStore 中文包已强制注入核心系统目录！"
+#    else
+#        TIME r "--> [失败] 中文包下载失败，请检查 GitHub 链接！"
+#    fi
+#}
 
 function Diy_partsh() {
-TIME y "正在执行：自定义文件"
-cd ${HOME_PATH}
-# 运行自定义文件
-${DIY_PT1_SH}
-./scripts/feeds update -a &>/dev/null
-}
-
+    TIME y "正在执行：自定义文件"
+    cd ${HOME_PATH}
+    
+    # 运行自定义文件
+    ${DIY_PT1_SH}
+    ./scripts/feeds update -a &>/dev/null
 
 function Diy_scripts() {
 TIME y "正在执行：更新和安装feeds"
@@ -451,6 +467,7 @@ echo -e "正在编译：${TARGET_PROFILE}\n"
 
 function Diy_management() {
 cd ${HOME_PATH}
+
 # 机型为armsr_rootfs_tar_gz的时,修改cpufreq代码适配Armvirt
 if [[ "${TARGET_BOARD}" =~ (armvirt|armsr) ]]; then
   for X in $(find "${HOME_PATH}" -type d -name "luci-app-cpufreq"); do \
@@ -458,6 +475,7 @@ if [[ "${TARGET_BOARD}" =~ (armvirt|armsr) ]]; then
     sed -i 's/LUCI_DEPENDS.*/LUCI_DEPENDS:=\@\(arm\|\|aarch64\)/g' "$X/Makefile"; \
   done
 fi
+
 
 if [[ ! -f "${HOME_PATH}/staging_dir/host/bin/upx" ]]; then
   cp -Rf /usr/bin/upx ${HOME_PATH}/staging_dir/host/bin/upx
@@ -468,9 +486,11 @@ fi
 if [[ ! -d "${HOME_PATH}/feeds/luci/modules/luci-mod-system" ]]; then
   cd "${HOME_PATH}" && bash "$LINSHI_COMMON/language/zh-cn.sh"
 fi
+
 # files文件夹删除LICENSE,README
 [[ -d "${HOME_PATH}/files" ]] && sudo chmod +x ${HOME_PATH}/files
 rm -rf ${HOME_PATH}/files/{LICENSE,README}
+
 }
 
 function Diy_definition() {
@@ -665,6 +685,32 @@ else
   echo "去除luci-app-openclash完成"
 fi
 
+if [[ "${Install_Argon_Config}" == "1" ]]; then
+  [ ! -d "${HOME_PATH}/package/luci-app-argon-config" ] && git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git ${HOME_PATH}/package/luci-app-argon-config
+  echo -e "\nCONFIG_PACKAGE_luci-app-argon-config=y" >> ${HOME_PATH}/.config
+  echo -e "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> ${HOME_PATH}/.config
+  echo "增加luci-app-argon-config完成"
+else
+  echo -e "\n# CONFIG_PACKAGE_luci-app-argon-config is not set" >> ${HOME_PATH}/.config
+  echo "去除luci-app-argon-config完成"
+fi
+
+
+
+if [[ "${Install_iStore}" == "1" ]]; then
+  # 1. 强行在 feeds.conf.default 插入官方独立源（确保它是最新的且语言包正确）
+  sed -i '/istore/d' feeds.conf.default
+  echo "src-git istore https://github.com/linkease/istore;main" >> feeds.conf.default
+  
+  # 2. 强行写入 .config 开关
+  echo -e "\nCONFIG_PACKAGE_luci-app-store=y" >> ${HOME_PATH}/.config
+  echo -e "CONFIG_PACKAGE_luci-i18n-store-zh-cn=y" >> ${HOME_PATH}/.config
+  echo "增加 luci-app-store(iStore) 完成"
+else
+  echo -e "\n# CONFIG_PACKAGE_luci-app-store is not set" >> ${HOME_PATH}/.config
+  echo "去除 luci-app-store 完成"
+fi
+
 
 if [[ "${Disable_autosamba}" == "1" ]]; then
 sed -i '/samba/d;/SAMBA/d' "${HOME_PATH}/.config"
@@ -834,6 +880,7 @@ CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-base=y
 CONFIG_PACKAGE_luci-compat=y
 CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-store-zh-cn=y
 CONFIG_PACKAGE_luci-lib-ipkg=y
 CONFIG_PACKAGE_default-settings=y
 CONFIG_PACKAGE_default-settings-chn=y
@@ -904,7 +951,7 @@ esac
 if [[ -n "${Arch}" ]] && [[ "${AdGuardHome_Core}" == "1" ]]; then
   rm -rf ${HOME_PATH}/AdGuardHome && rm -rf ${HOME_PATH}/files/usr/bin
   if [[ ! -f "$LINSHI_COMMON/language/AdGuardHome.api" ]]; then
-    if ! wget -q https://github.com/281677160/common/releases/download/API/AdGuardHome.api -O "$LINSHI_COMMON/language/AdGuardHome.api"; then
+    if ! wget -q https://github.com/ranqingwen/common/releases/download/API/AdGuardHome.api -O "$LINSHI_COMMON/language/AdGuardHome.api"; then
       TIME r "AdGuardHome.api下载失败"
     fi
   fi
@@ -1079,21 +1126,35 @@ if [[ `grep -c "CONFIG_PACKAGE_luci-app-dockerman=y" ${HOME_PATH}/.config` -eq '
   echo "# CONFIG_PACKAGE_runc is not set" >> ${HOME_PATH}/.config
 fi
 
+# 1. 进入 Argon 主题处理逻辑
 if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon=y" ${HOME_PATH}/.config` -eq '1' ]]; then
-  pmg="$(date +%M | grep -o '.$').jpg"
-  [[ ! -d "${HOME_PATH}/files/www/luci-static/argon/background" ]] && mkdir -p "${HOME_PATH}/files/www/luci-static/argon/background"
-  cp -Rf "$LINSHI_COMMON/Share/argon/jpg/${pmg}" "${HOME_PATH}/files/www/luci-static/argon/background/argon.jpg"
-  if [[ $? -ne 0 ]]; then
-    echo "拉取文件错误,请检测网络"
-    exit 1
+  TIME g "正在预埋 Argon 主题自定义背景..."
+  
+  # 定义固件内的目标目录
+  local TARGET_DIR="${HOME_PATH}/files/www/luci-static/argon/background"
+  [[ ! -d "${TARGET_DIR}" ]] && mkdir -p "${TARGET_DIR}"
+  
+  # 【修改部分】：直接使用你改名后的 argon.jpg，不再使用随机数 pmg
+  if [ -f "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" ]; then
+    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" "${TARGET_DIR}/argon.jpg"
+    TIME g "--> [成功] 自定义背景已注入: argon.jpg"
+  elif [ -f "$LINSHI_COMMON/Share/argon/jpg/1.jpg" ]; then
+    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/1.jpg" "${TARGET_DIR}/argon.jpg"
+    TIME g "--> [成功] 检测到 1.jpg，已重命名并注入为 argon.jpg"
+  else
+    TIME r "--> [失败] 未能在 $LINSHI_COMMON/Share/argon/jpg/ 下找到背景源文件！"
   fi
+
+  # 2. 冲突检测：如果你选了 argon，就自动去掉 argon_new
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon_new=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argon_new=y/# CONFIG_PACKAGE_luci-theme-argon_new is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argon_new"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，已自动删除 argon_new"
   fi
+
+  # 3. 冲突检测：如果你选了 argon，就自动去掉 argonne
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argonne=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argonne=y/# CONFIG_PACKAGE_luci-theme-argonne is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argonne"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，已自动删除 argonne"
   fi
 fi
 
@@ -1273,8 +1334,6 @@ sed -i -E '/^\t/! s/^ +//' "${DEFAULT_PATH}"
 ! grep -q "exit 0" "$DEFAULT_PATH" && sed -i '$a\exit 0' "${DEFAULT_PATH}"
 }
 
-
-
 function Diy_firmware() {
 # 远程更新处理固件
 if [ "${UPDATE_FIRMWARE_ONLINE}" == "true" ]; then
@@ -1315,7 +1374,8 @@ done
 TIME g "整理后的文件"
 ls -1
 if ! echo "$TARGET_BOARD" | grep -Eq 'armvirt|armsr'; then
-  rename "s/^openwrt/${GUJIAN_DATE}-${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}/" *
+  # 使用 TARGET_PROFILE 动态匹配，并直接替换掉冗长的中间后缀
+  rename "s/openwrt-x86-64-generic-squashfs-combined/${GUJIAN_DATE}-${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}/" *
   TIME g "更改名称后的固件，也是最终上传使用的"
   ls -1
 fi
@@ -1324,7 +1384,6 @@ echo "DATE=$(date "+%Y%m%d%H%M%S")" >> ${GITHUB_ENV}
 echo "TONGZHI_DATE=$(date +%Y年%m月%d日)" >> ${GITHUB_ENV}
 echo "FIRMWARE_DATE=$(date +%Y-%m%d-%H%M)" >> ${GITHUB_ENV}
 }
-
 
 function gitsvn() {
 local url="${1%.git}"
