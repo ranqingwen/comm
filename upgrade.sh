@@ -17,15 +17,21 @@ function Diy_Part1() {
 }
 
 function Diy_Part2() {
+	# 强制从 GitHub 环境变量文件中加载变量，确保 LINUX_KERNEL 等变量可用
+	[ -f "${GITHUB_ENV}" ] && source "${GITHUB_ENV}"
+
 	export UPDATE_TAG="AutoUpdate-${TARGET_BOARD}"
 	export FILESETC_UPDATE="${HOME_PATH}/package/base-files/files/etc/openwrt_update"
 	export GITHUB_PROXY="https://ghfast.top"
 	export RELEASE_DOWNLOAD="\$GITHUB_LINK/releases/download/${UPDATE_TAG}"
 	export GITHUB_RELEASE="${GITHUB_LINK}/releases/tag/${UPDATE_TAG}"
+	
 	if [[ ! -f "$LINSHI_COMMON/autoupdate/replace" ]]; then
 		echo -e "\n\033[0;31m缺少autoupdate/replace文件\033[0m"
 		exit 1
 	fi
+
+	# 识别设备型号
 	if [[ "${TARGET_PROFILE}" == *"k3"* ]]; then
 		export TARGET_PROFILE_ER="phicomm-k3"
 	elif [[ "${TARGET_PROFILE}" == *"k2p"* ]]; then
@@ -40,49 +46,18 @@ function Diy_Part2() {
 		export TARGET_PROFILE_ER="${TARGET_PROFILE}"
 	fi
 	
+	# 如果 LINUX_KERNEL 依然为空，给一个保底处理，防止出现双横杠
+	[ -z "${LINUX_KERNEL}" ] && LINUX_KERNEL="Unknown"
+
 	case "${TARGET_BOARD}" in
-	ramips | reltek | ath* | ipq* | bmips | kirkwood | mediatek |bcm4908 |gemini |lantiq |layerscape |qualcommax |qualcommbe |siflower |silicon)
-		export FIRMWARE_SUFFIX=".bin"
-		# 格式：Lede-24.10-6.12.80-型号-时间戳
-		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
-	;;
-	bcm47xx)
-		if echo "$TARGET_PROFILE" | grep -Eq 'asus'; then
-			export FIRMWARE_SUFFIX=".trx"
-		elif echo "$TARGET_PROFILE" | grep -Eq 'netgear'; then
-			export FIRMWARE_SUFFIX=".chk"
-		else
-			export FIRMWARE_SUFFIX=".bin"
-		fi
-		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
-	;;
 	x86)
 		export FIRMWARE_SUFFIX=".img.gz"
-		# 这里的修改对应您的需求：Lede-24.10-6.12.80-x86-64-1775536153
+		# 格式：源码-版本-内核-型号-时间戳
 		export AUTOBUILD_FIRMWARE_UEFI="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
-	rockchip | bcm27xx | mxs | sunxi | zynq |loongarch64 |omap |sifiveu |tegra |amlogic | mvebu)
-		export FIRMWARE_SUFFIX=".img.gz"
-		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
-	;;
-	bcm53xx)
-		if echo "$TARGET_PROFILE" | grep -Eq 'mr32|tplink|dlink'; then
-			export FIRMWARE_SUFFIX=".bin"
-		elif echo "$TARGET_PROFILE" | grep -Eq 'luxul'; then
-			export FIRMWARE_SUFFIX=".lxl"
-		elif echo "$TARGET_PROFILE" | grep -Eq 'netgear'; then
-			export FIRMWARE_SUFFIX=".chk"
-		else
-			export FIRMWARE_SUFFIX=".trx"
-		fi
-		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
-	;;
-	octeon | oxnas | pistachio)
-		export FIRMWARE_SUFFIX=".tar"
-		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
-	;;
 	*)
+		# 非x86机型通用格式
 		export FIRMWARE_SUFFIX=".bin"
 		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
@@ -90,7 +65,7 @@ function Diy_Part2() {
 	
 	export FIRMWARE_VERSION="${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 
-	# 将 legacy 修改为 bios
+	# 引导类型处理
 	if [[ "${TARGET_BOARD}" == "x86" ]]; then
 		BOOT_TYPE="bios"
 		echo "AUTOBUILD_FIRMWARE_UEFI=${AUTOBUILD_FIRMWARE_UEFI}-uefi" >> ${GITHUB_ENV}
@@ -127,9 +102,9 @@ function Diy_Part2() {
 	echo "UPDATE_TAG=\"${UPDATE_TAG}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 	echo "BOOT_TYPE=\"${BOOT_TYPE}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 	echo "FIRMWARE_SUFFIX=\"${FIRMWARE_SUFFIX}\"" >> "${GITHUB_WORKSPACE}/del_assets"
-	# 这里也要同步修改名称顺序
 	echo "FIRMWARE_PROFILEER=\"${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 }
+
 function Diy_Part3() {
 	BIN_PATH="${HOME_PATH}/bin/Firmware"
 	echo "BIN_PATH=${BIN_PATH}" >> ${GITHUB_ENV}
