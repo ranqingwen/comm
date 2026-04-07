@@ -17,9 +17,6 @@ function Diy_Part1() {
 }
 
 function Diy_Part2() {
-	# 强制从 GitHub 环境变量文件中加载变量，确保 LINUX_KERNEL 等变量可用
-	[ -f "${GITHUB_ENV}" ] && source "${GITHUB_ENV}"
-
 	export UPDATE_TAG="AutoUpdate-${TARGET_BOARD}"
 	export FILESETC_UPDATE="${HOME_PATH}/package/base-files/files/etc/openwrt_update"
 	export GITHUB_PROXY="https://ghfast.top"
@@ -30,6 +27,17 @@ function Diy_Part2() {
 		echo -e "\n\033[0;31m缺少autoupdate/replace文件\033[0m"
 		exit 1
 	fi
+
+	# --- 核心修复：直接在函数内提取内核版本，不再依赖外部变量 ---
+	# 尝试从 include/kernel-version.mk 提取 (6.12.80 这种格式)
+	local KERN_V=$(grep "LINUX_VERSION-6.12 =" "${HOME_PATH}/include/kernel-version.mk" | cut -d= -f2 | tr -d ' ')
+	# 如果没找到，尝试从 Makefile 提取
+	[ -z "$KERN_V" ] && KERN_V=$(grep "KERNEL_PATCHVER:=" "${HOME_PATH}/target/linux/${TARGET_BOARD}/Makefile" | cut -d= -f2 | tr -d ' ')
+	# 如果还是没找到，尝试通用提取
+	[ -z "$KERN_V" ] && KERN_V=$(grep -oP '(?<=LINUX_VERSION:=).*' "${HOME_PATH}/include/kernel-version.mk" | head -n 1 | tr -d ' ')
+	
+	# 赋值给变量，如果最终还是空则设为 N/A
+	export LINUX_KERNEL="${KERN_V:-N/A}"
 
 	# 识别设备型号
 	if [[ "${TARGET_PROFILE}" == *"k3"* ]]; then
@@ -46,9 +54,6 @@ function Diy_Part2() {
 		export TARGET_PROFILE_ER="${TARGET_PROFILE}"
 	fi
 	
-	# 如果 LINUX_KERNEL 依然为空，给一个保底处理，防止出现双横杠
-	[ -z "${LINUX_KERNEL}" ] && LINUX_KERNEL="Unknown"
-
 	case "${TARGET_BOARD}" in
 	x86)
 		export FIRMWARE_SUFFIX=".img.gz"
@@ -57,7 +62,6 @@ function Diy_Part2() {
 		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	*)
-		# 非x86机型通用格式
 		export FIRMWARE_SUFFIX=".bin"
 		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
@@ -65,7 +69,6 @@ function Diy_Part2() {
 	
 	export FIRMWARE_VERSION="${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 
-	# 引导类型处理
 	if [[ "${TARGET_BOARD}" == "x86" ]]; then
 		BOOT_TYPE="bios"
 		echo "AUTOBUILD_FIRMWARE_UEFI=${AUTOBUILD_FIRMWARE_UEFI}-uefi" >> ${GITHUB_ENV}
