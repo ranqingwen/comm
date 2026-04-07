@@ -436,8 +436,6 @@ function Diy_profile() {
 TIME y "正在执行：识别源码编译为何机型"
 cd ${HOME_PATH}
 make defconfig > /dev/null 2>&1
-variable LINUX_KERNEL="$(grep -oP 'LINUX_KMOD_SUFFIX=.*' include/kernel.mk | cut -d= -f2 | tr -d ' ' || grep "KERNEL_PATCHVER:=" "${HOME_PATH}/target/linux/${TARGET_BOARD}/Makefile" | cut -d= -f2)"
-  [ -z "${LINUX_KERNEL}" ] && variable LINUX_KERNEL="$(grep "KERNEL_PATCHVER:=" "${HOME_PATH}/include/kernel-version.mk" | cut -d= -f2)"
 variable TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' ${HOME_PATH}/.config)"
 variable TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${HOME_PATH}/.config)"
 variable TARGET_PROFILE_DG="$(awk -F '[="]+' '/TARGET_PROFILE/{print $2}' ${HOME_PATH}/.config)"
