@@ -32,17 +32,25 @@ COOLSNOWWOLF)
   variable SOURCE="Lede"
   variable SOURCE_OWNER="Lean"
   variable DISTRIB_SOURCECODE="lede"
-  # 优先尝试从源码文件中自动获取版本号，获取不到则根据分支名处理
+  # 优先尝试从源码文件中自动获取版本号
   if [ -f "package/base-files/files/etc/openwrt_release" ]; then
     variable LUCI_EDITION="$(grep "DISTRIB_RELEASE" package/base-files/files/etc/openwrt_release | cut -d "'" -f2)"
   else
-    # 如果文件不存在，则套用你其他源码的格式，移除分支名中的 openwrt- 前缀
     variable LUCI_EDITION="$(echo "${REPO_BRANCH}" | sed 's/openwrt-//g')"
   fi
-  # 如果结果为空（比如 master 分支），则给一个默认显示值
+  # 修改默认显示值为 24.10
   [ -z "${LUCI_EDITION}" ] || [ "${LUCI_EDITION}" == "master" ] && variable LUCI_EDITION="24.10"
   
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
+
+  # 【核心修改：执行文件写入】
+  # 1. 即使不改变量，我们也强行把系统标识改为 Lean
+  sed -i "s/DISTRIB_REVISION='.*'/DISTRIB_REVISION='${SOURCE_OWNER}'/g" package/base-files/files/etc/openwrt_release
+  
+  # 2. 这里的顺序很关键：把 / Lede 放在最后。
+  # 大多数主题（如 Argon）会自动截取 @OpenWrt 之前的内容显示在登录页和底部。
+  # 注意：@OpenWrt 之间没有空格，日期前加了 R
+  sed -i "s/DISTRIB_DESCRIPTION='.*'/DISTRIB_DESCRIPTION='${SOURCE} by ranqw R${UPGRADE_DATE} @OpenWrt ${DISTRIB_REVISION} \/ ${SOURCE} - ${LUCI_EDITION}'/g" package/base-files/files/etc/openwrt_release
 ;;
 LIENOL)
   variable REPO_URL="https://github.com/Lienol/openwrt"
