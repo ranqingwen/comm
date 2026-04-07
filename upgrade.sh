@@ -30,14 +30,16 @@ function Diy_Part2() {
 
 	# --- 核心修复：直接在函数内提取内核版本，不再依赖外部变量 ---
 	# 尝试从 include/kernel-version.mk 提取 (6.12.80 这种格式)
-	local KERN_V=$(grep "LINUX_VERSION-6.12 =" "${HOME_PATH}/include/kernel-version.mk" | cut -d= -f2 | tr -d ' ')
-	# 如果没找到，尝试从 Makefile 提取
-	[ -z "$KERN_V" ] && KERN_V=$(grep "KERNEL_PATCHVER:=" "${HOME_PATH}/target/linux/${TARGET_BOARD}/Makefile" | cut -d= -f2 | tr -d ' ')
-	# 如果还是没找到，尝试通用提取
-	[ -z "$KERN_V" ] && KERN_V=$(grep -oP '(?<=LINUX_VERSION:=).*' "${HOME_PATH}/include/kernel-version.mk" | head -n 1 | tr -d ' ')
+	local KERN_V=$(grep -oP '(?<=LINUX_VERSION-6.12 = ).*' "${HOME_PATH}/include/kernel-version.mk" | tr -d ' ')
 	
-	# 赋值给变量，如果最终还是空则设为 N/A
-	export LINUX_KERNEL="${KERN_V:-N/A}"
+	# 2. 如果上面没匹配到，尝试通用的 LINUX_VERSION 提取
+	[ -z "$KERN_V" ] && KERN_V=$(grep "^LINUX_VERSION:=" "${HOME_PATH}/include/kernel-version.mk" | cut -d= -f2 | tr -d ' ')
+	
+	# 3. 如果还是没有，尝试从 Makefile 提取
+	[ -z "$KERN_V" ] && KERN_V=$(grep "KERNEL_PATCHVER:=" "${HOME_PATH}/target/linux/${TARGET_BOARD}/Makefile" | cut -d= -f2 | tr -d ' ')
+
+	# 赋值，确保不为空
+	export LINUX_KERNEL="${KERN_V:-6.12}"
 
 	# 识别设备型号
 	if [[ "${TARGET_PROFILE}" == *"k3"* ]]; then
