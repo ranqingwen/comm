@@ -665,33 +665,6 @@ else
   echo "去除luci-app-openclash完成"
 fi
 
-if [[ "${Install_Argon_Config}" == "1" ]]; then
-  [ ! -d "${HOME_PATH}/package/luci-app-argon-config" ] && git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git ${HOME_PATH}/package/luci-app-argon-config
-  echo -e "\nCONFIG_PACKAGE_luci-app-argon-config=y" >> ${HOME_PATH}/.config
-  echo -e "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> ${HOME_PATH}/.config
-  echo "增加luci-app-argon-config完成"
-else
-  echo -e "\n# CONFIG_PACKAGE_luci-app-argon-config is not set" >> ${HOME_PATH}/.config
-  echo "去除luci-app-argon-config完成"
-fi
-
-if [[ "${Install_iStore}" == "1" ]]; then
-  # 1. 强行在 feeds.conf.default 插入官方独立源（确保它是最新的且语言包正确）
-  sed -i '/istore/d' feeds.conf.default
-  echo "src-git istore https://github.com/linkease/istore;main" >> feeds.conf.default
-  
-  # 2. 强行写入 .config 开关
-  echo -e "\nCONFIG_PACKAGE_luci-app-store=y" >> ${HOME_PATH}/.config
-  echo -e "CONFIG_PACKAGE_luci-i18n-store-zh-cn=y" >> ${HOME_PATH}/.config
-  echo "增加 luci-app-store(iStore) 完成"
-else
-  echo -e "\n# CONFIG_PACKAGE_luci-app-store is not set" >> ${HOME_PATH}/.config
-  echo "去除 luci-app-store 完成"
-fi
-
-
-
-
 if [[ "${Disable_autosamba}" == "1" ]]; then
 sed -i '/samba/d;/SAMBA/d' "${HOME_PATH}/.config"
 echo '
