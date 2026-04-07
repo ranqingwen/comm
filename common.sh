@@ -31,8 +31,17 @@ COOLSNOWWOLF)
   variable REPO_URL="https://github.com/coolsnowwolf/lede"
   variable SOURCE="Lede"
   variable SOURCE_OWNER="Lean"
-  variable LUCI_EDITION="23.05"
   variable DISTRIB_SOURCECODE="lede"
+  # 优先尝试从源码文件中自动获取版本号，获取不到则根据分支名处理
+  if [ -f "package/base-files/files/etc/openwrt_release" ]; then
+    variable LUCI_EDITION="$(grep "DISTRIB_RELEASE" package/base-files/files/etc/openwrt_release | cut -d "'" -f2)"
+  else
+    # 如果文件不存在，则套用你其他源码的格式，移除分支名中的 openwrt- 前缀
+    variable LUCI_EDITION="$(echo "${REPO_BRANCH}" | sed 's/openwrt-//g')"
+  fi
+  # 如果结果为空（比如 master 分支），则给一个默认显示值
+  [ -z "${LUCI_EDITION}" ] || [ "${LUCI_EDITION}" == "master" ] && variable LUCI_EDITION="24.10"
+  
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
 ;;
 LIENOL)
@@ -689,7 +698,19 @@ else
   echo "去除 luci-app-store 完成"
 fi
 
-
+if [[ "${Install_Advanced}" == "1" ]]; then
+  # 1. 下载插件源码到 package 目录
+  [ ! -d "${HOME_PATH}/package/luci-app-advanced" ] && git clone --depth 1 https://github.com/sirpdboy/luci-app-advanced.git ${HOME_PATH}/package/luci-app-advanced
+  
+  # 2. 写入编译开关到 .config
+  echo -e "\nCONFIG_PACKAGE_luci-app-advanced=y" >> ${HOME_PATH}/.config
+  echo -e "CONFIG_PACKAGE_luci-i18n-advanced-zh-cn=y" >> ${HOME_PATH}/.config
+  echo "增加 luci-app-advanced (高级设置) 完成"
+else
+  # 3. 如果不安装，则在 .config 中显式注销
+  echo -e "\n# CONFIG_PACKAGE_luci-app-advanced is not set" >> ${HOME_PATH}/.config
+  echo "去除 luci-app-advanced 完成"
+fi
 
 
 if [[ "${Disable_autosamba}" == "1" ]]; then
