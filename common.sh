@@ -1114,20 +1114,28 @@ if [[ `grep -c "CONFIG_PACKAGE_luci-app-dockerman=y" ${HOME_PATH}/.config` -eq '
 fi
 
 if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon=y" ${HOME_PATH}/.config` -eq '1' ]]; then
-  pmg="$(date +%M | grep -o '.$').jpg"
+  # 1. 确保目标目录存在
   [[ ! -d "${HOME_PATH}/files/www/luci-static/argon/background" ]] && mkdir -p "${HOME_PATH}/files/www/luci-static/argon/background"
-  cp -Rf "$LINSHI_COMMON/Share/argon/jpg/${pmg}" "${HOME_PATH}/files/www/luci-static/argon/background/argon.jpg"
+  
+  # 2. 修改后的 cp 命令：直接指向你库里的 argon.jpg
+  # 注意：请确保你的 $LINSHI_COMMON/Share/argon/ 目录下确实有 argon.jpg 这个文件
+  cp -Rf "$LINSHI_COMMON/Share/argon/argon.jpg" "${HOME_PATH}/files/www/luci-static/argon/background/argon.jpg"
+  
+  # 3. 容错判断：如果拷贝失败（比如文件不存在），输出警告而不是直接报错退出
   if [[ $? -ne 0 ]]; then
-    echo "拉取文件错误,请检测网络"
-    exit 1
+    echo "警告: 自定义背景图 argon.jpg 拷贝失败，请检查 $LINSHI_COMMON/Share/argon/ 目录下是否存在该文件"
+    # 如果你希望拷贝失败就停止编译，可以保留 exit 1；如果希望继续编译，请注释掉下面这行
+    # exit 1
   fi
+
+  # 4. 后续冲突检测保持不变
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon_new=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argon_new=y/# CONFIG_PACKAGE_luci-theme-argon_new is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argon_new"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，已删除luci-theme-argon_new"
   fi
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argonne=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argonne=y/# CONFIG_PACKAGE_luci-theme-argonne is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argonne"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，已删除luci-theme-argonne"
   fi
 fi
 
