@@ -436,6 +436,8 @@ function Diy_profile() {
 TIME y "正在执行：识别源码编译为何机型"
 cd ${HOME_PATH}
 make defconfig > /dev/null 2>&1
+variable LINUX_KERNEL="$(grep -oP 'LINUX_KMOD_SUFFIX=.*' include/kernel.mk | cut -d= -f2 | tr -d ' ' || grep "KERNEL_PATCHVER:=" "${HOME_PATH}/target/linux/${TARGET_BOARD}/Makefile" | cut -d= -f2)"
+  [ -z "${LINUX_KERNEL}" ] && variable LINUX_KERNEL="$(grep "KERNEL_PATCHVER:=" "${HOME_PATH}/include/kernel-version.mk" | cut -d= -f2)"
 variable TARGET_BOARD="$(awk -F '[="]+' '/TARGET_BOARD/{print $2}' ${HOME_PATH}/.config)"
 variable TARGET_SUBTARGET="$(awk -F '[="]+' '/TARGET_SUBTARGET/{print $2}' ${HOME_PATH}/.config)"
 variable TARGET_PROFILE_DG="$(awk -F '[="]+' '/TARGET_PROFILE/{print $2}' ${HOME_PATH}/.config)"
@@ -1370,6 +1372,7 @@ if [[ -n "$(ls -1 |grep -E 'immortalwrt')" ]]; then
   rename "s/^immortalwrt/openwrt/" *
   sed -i 's/immortalwrt/openwrt/g' `egrep "immortalwrt" -rl ./`
 fi
+
 TIME g "整理前的全部文件"
 ls -1
 for X in $(cat ${CLEAR_PATH} |sed "s/.*${TARGET_BOARD}//g"); do
@@ -1377,9 +1380,18 @@ for X in $(cat ${CLEAR_PATH} |sed "s/.*${TARGET_BOARD}//g"); do
 done
 TIME g "整理后的文件"
 ls -1
+
+# 确保获取到内核版本（如果环境变量中未定义）
+[ -z "${LINUX_KERNEL}" ] && export LINUX_KERNEL="$(grep -Po 'LINUX_VERSION:=\K.*' ${HOME_PATH}/include/kernel-version.mk)"
+
 if ! echo "$TARGET_BOARD" | grep -Eq 'armvirt|armsr'; then
-  # 使用 TARGET_PROFILE 动态匹配，并直接替换掉冗长的中间后缀
-  rename "s/openwrt-x86-64-generic-squashfs-combined/${GUJIAN_DATE}-${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}/" *
+  # 1. 首先处理 UEFI 固件：将带 -efi 后缀的文件重命名为 -uefi 格式
+  rename "s/openwrt-x86-64-generic-squashfs-combined-efi/${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}-${GUJIAN_DATE}-uefi/" *
+  
+  # 2. 然后处理 BIOS 固件：将剩余的 combined.img.gz 文件重命名为 -bios 格式
+  # 注意：这里使用特定的后缀匹配，避免干扰已更名的 UEFI 文件
+  rename "s/openwrt-x86-64-generic-squashfs-combined.img.gz/${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}-${GUJIAN_DATE}-bios.img.gz/" *
+  
   TIME g "更改名称后的固件，也是最终上传使用的"
   ls -1
 fi
@@ -1388,7 +1400,6 @@ echo "DATE=$(date "+%Y%m%d%H%M%S")" >> ${GITHUB_ENV}
 echo "TONGZHI_DATE=$(date +%Y年%m月%d日)" >> ${GITHUB_ENV}
 echo "FIRMWARE_DATE=$(date +%Y-%m%d-%H%M)" >> ${GITHUB_ENV}
 }
-
 
 function gitsvn() {
 local url="${1%.git}"
