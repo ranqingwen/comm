@@ -665,6 +665,32 @@ else
   echo "去除luci-app-openclash完成"
 fi
 
+if [[ "${Install_Argon_Config}" == "1" ]]; then
+  [ ! -d "${HOME_PATH}/package/luci-app-argon-config" ] && git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git ${HOME_PATH}/package/luci-app-argon-config
+  echo -e "\nCONFIG_PACKAGE_luci-app-argon-config=y" >> ${HOME_PATH}/.config
+  echo -e "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> ${HOME_PATH}/.config
+  echo "增加luci-app-argon-config完成"
+else
+  echo -e "\n# CONFIG_PACKAGE_luci-app-argon-config is not set" >> ${HOME_PATH}/.config
+  echo "去除luci-app-argon-config完成"
+fi
+
+if [[ "${Install_iStore}" == "1" ]]; then
+  # 1. 强行在 feeds.conf.default 插入官方独立源（确保它是最新的且语言包正确）
+  sed -i '/istore/d' feeds.conf.default
+  echo "src-git istore https://github.com/linkease/istore;main" >> feeds.conf.default
+  
+  # 2. 强行写入 .config 开关
+  echo -e "\nCONFIG_PACKAGE_luci-app-store=y" >> ${HOME_PATH}/.config
+  echo -e "CONFIG_PACKAGE_luci-i18n-store-zh-cn=y" >> ${HOME_PATH}/.config
+  echo "增加 luci-app-store(iStore) 完成"
+else
+  echo -e "\n# CONFIG_PACKAGE_luci-app-store is not set" >> ${HOME_PATH}/.config
+  echo "去除 luci-app-store 完成"
+fi
+
+
+
 
 if [[ "${Disable_autosamba}" == "1" ]]; then
 sed -i '/samba/d;/SAMBA/d' "${HOME_PATH}/.config"
@@ -1079,21 +1105,35 @@ if [[ `grep -c "CONFIG_PACKAGE_luci-app-dockerman=y" ${HOME_PATH}/.config` -eq '
   echo "# CONFIG_PACKAGE_runc is not set" >> ${HOME_PATH}/.config
 fi
 
+# 1. 进入 Argon 主题处理逻辑
 if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon=y" ${HOME_PATH}/.config` -eq '1' ]]; then
-  pmg="$(date +%M | grep -o '.$').jpg"
-  [[ ! -d "${HOME_PATH}/files/www/luci-static/argon/background" ]] && mkdir -p "${HOME_PATH}/files/www/luci-static/argon/background"
-  cp -Rf "$LINSHI_COMMON/Share/argon/jpg/${pmg}" "${HOME_PATH}/files/www/luci-static/argon/background/argon.jpg"
-  if [[ $? -ne 0 ]]; then
-    echo "拉取文件错误,请检测网络"
-    exit 1
+  TIME g "正在预埋 Argon 主题自定义背景..."
+  
+  # 定义固件内的目标目录
+  local TARGET_DIR="${HOME_PATH}/files/www/luci-static/argon/background"
+  [[ ! -d "${TARGET_DIR}" ]] && mkdir -p "${TARGET_DIR}"
+  
+  # 【修改部分】：直接使用你改名后的 argon.jpg，不再使用随机数 pmg
+  if [ -f "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" ]; then
+    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" "${TARGET_DIR}/argon.jpg"
+    TIME g "--> [成功] 自定义背景已注入: argon.jpg"
+  elif [ -f "$LINSHI_COMMON/Share/argon/jpg/1.jpg" ]; then
+    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/1.jpg" "${TARGET_DIR}/argon.jpg"
+    TIME g "--> [成功] 检测到 1.jpg，已重命名并注入为 argon.jpg"
+  else
+    TIME r "--> [失败] 未能在 $LINSHI_COMMON/Share/argon/jpg/ 下找到背景源文件！"
   fi
+
+  # 2. 冲突检测：如果你选了 argon，就自动去掉 argon_new
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon_new=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argon_new=y/# CONFIG_PACKAGE_luci-theme-argon_new is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argon_new"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，已自动删除 argon_new"
   fi
+
+  # 3. 冲突检测：如果你选了 argon，就自动去掉 argonne
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argonne=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argonne=y/# CONFIG_PACKAGE_luci-theme-argonne is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argonne"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，已自动删除 argonne"
   fi
 fi
 
@@ -1315,7 +1355,8 @@ done
 TIME g "整理后的文件"
 ls -1
 if ! echo "$TARGET_BOARD" | grep -Eq 'armvirt|armsr'; then
-  rename "s/^openwrt/${GUJIAN_DATE}-${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}/" *
+  # 使用 TARGET_PROFILE 动态匹配，并直接替换掉冗长的中间后缀
+  rename "s/openwrt-x86-64-generic-squashfs-combined/${GUJIAN_DATE}-${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}/" *
   TIME g "更改名称后的固件，也是最终上传使用的"
   ls -1
 fi
