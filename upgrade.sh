@@ -17,7 +17,7 @@ function Diy_Part1() {
 }
 
 function Diy_Part2() {
-	# 统一改为 AutoUpdate
+	# 统一标签名为 AutoUpdate
 	export UPDATE_TAG="AutoUpdate-${TARGET_BOARD}"
 	export FILESETC_UPDATE="${HOME_PATH}/package/base-files/files/etc/openwrt_update"
 	export GITHUB_PROXY="https://ghfast.top"
@@ -47,17 +47,17 @@ function Diy_Part2() {
 	case "${TARGET_BOARD}" in
 	x86)
 		export FIRMWARE_SUFFIX=".img.gz"
-		# 格式：版本-源码-型号-时间戳
-		export AUTOBUILD_FIRMWARE_UEFI="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		# 【修改位置】格式：源码-版本-型号-时间戳 (Lede-24.10-x86-64-...)
+		export AUTOBUILD_FIRMWARE_UEFI="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	rockchip | bcm27xx | mxs | sunxi | zynq |loongarch64 |omap |sifiveu |tegra |amlogic |mvebu)
 		export FIRMWARE_SUFFIX=".img.gz"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	*)
 		export FIRMWARE_SUFFIX=".bin"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	esac
 	
@@ -100,7 +100,8 @@ function Diy_Part2() {
 	echo "UPDATE_TAG=\"${UPDATE_TAG}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 	echo "BOOT_TYPE=\"${BOOT_TYPE}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 	echo "FIRMWARE_SUFFIX=\"${FIRMWARE_SUFFIX}\"" >> "${GITHUB_WORKSPACE}/del_assets"
-	echo "FIRMWARE_PROFILEER=\"${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}\"" >> "${GITHUB_WORKSPACE}/del_assets"
+	# 这里也要同步修改顺序，确保清理逻辑能匹配到
+	echo "FIRMWARE_PROFILEER=\"${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 }
 
 function Diy_Part3() {
@@ -118,7 +119,7 @@ function Diy_Part3() {
 		if [[ -n "$(ls -1 | grep -E 'efi')" ]]; then
 			EFI_ZHONGZHUAN="$(ls -1 |grep -Eo ".*squashfs.*efi.*img.gz" |grep -v ".vm\|.vb\|.vh\|.qco\|ext4\|root\|factory\|kernel")"
 			if [[ -f "${EFI_ZHONGZHUAN}" ]]; then
-				# 重新计算并拼接 MD5
+				# 计算并拼接 MD5 (3位md5+3位sha256)
 				EFIMD5="$(md5sum ${EFI_ZHONGZHUAN} |cut -c1-3)$(sha256sum ${EFI_ZHONGZHUAN} |cut -c1-3)"
 				cp -Rf "${EFI_ZHONGZHUAN}" "${BIN_PATH}/${AUTOBUILD_FIRMWARE_UEFI}-${EFIMD5}${FIRMWARE_SUFFIX}"
 				echo "BOOT_UEFI=\"uefi\"" >> "${GITHUB_WORKSPACE}/del_assets"
@@ -134,7 +135,7 @@ function Diy_Part3() {
 		fi
 	;;
 	*)
-		# 其他机型匹配逻辑
+		# 通用匹配逻辑
 		if [[ -n "$(ls -1 | grep -E 'sysupgrade')" ]]; then
 			UP_ZHONGZHUAN="$(ls -1 |grep -Eo ".*${TARGET_PROFILE}.*sysupgrade.*${FIRMWARE_SUFFIX}" |grep -v ".vm\|.vb\|.vh\|.qco\|efi\|ext4\|root\|factory\|kernel")"
 		elif [[ -n "$(ls -1 | grep -E 'squashfs')" ]]; then
