@@ -1105,35 +1105,29 @@ if [[ `grep -c "CONFIG_PACKAGE_luci-app-dockerman=y" ${HOME_PATH}/.config` -eq '
   echo "# CONFIG_PACKAGE_runc is not set" >> ${HOME_PATH}/.config
 fi
 
-# 1. 进入 Argon 主题处理逻辑
-if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon=y" ${HOME_PATH}/.config` -eq '1' ]]; then
-  TIME g "正在预埋 Argon 主题自定义背景..."
-  
-  # 定义固件内的目标目录
-  local TARGET_DIR="${HOME_PATH}/files/www/luci-static/argon/background"
-  [[ ! -d "${TARGET_DIR}" ]] && mkdir -p "${TARGET_DIR}"
-  
-  # 【修改部分】：直接使用你改名后的 argon.jpg，不再使用随机数 pmg
-  if [ -f "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" ]; then
-    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" "${TARGET_DIR}/argon.jpg"
-    TIME g "--> [成功] 自定义背景已注入: argon.jpg"
-  elif [ -f "$LINSHI_COMMON/Share/argon/jpg/1.jpg" ]; then
-    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/1.jpg" "${TARGET_DIR}/argon.jpg"
-    TIME g "--> [成功] 检测到 1.jpg，已重命名并注入为 argon.jpg"
-  else
-    TIME r "--> [失败] 未能在 $LINSHI_COMMON/Share/argon/jpg/ 下找到背景源文件！"
-  fi
+if [[ `grep -c "CONFIG_PACKAGE_luci-app-dockerman=y" ${HOME_PATH}/.config` -eq '0' ]] || [[ `grep -c "CONFIG_PACKAGE_luci-app-docker=y" ${HOME_PATH}/.config` -eq '0' ]]; then
+  echo "# CONFIG_PACKAGE_luci-lib-docker is not set" >> ${HOME_PATH}/.config
+  echo "# CONFIG_PACKAGE_luci-i18n-dockerman-zh-cn is not set" >> ${HOME_PATH}/.config
+  echo "# CONFIG_PACKAGE_docker is not set" >> ${HOME_PATH}/.config
+  echo "# CONFIG_PACKAGE_dockerd is not set" >> ${HOME_PATH}/.config
+  echo "# CONFIG_PACKAGE_runc is not set" >> ${HOME_PATH}/.config
+fi
 
-  # 2. 冲突检测：如果你选了 argon，就自动去掉 argon_new
+if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon=y" ${HOME_PATH}/.config` -eq '1' ]]; then
+  pmg="$(date +%M | grep -o '.$').jpg"
+  [[ ! -d "${HOME_PATH}/files/www/luci-static/argon/background" ]] && mkdir -p "${HOME_PATH}/files/www/luci-static/argon/background"
+  cp -Rf "$LINSHI_COMMON/Share/argon/jpg/${pmg}" "${HOME_PATH}/files/www/luci-static/argon/background/argon.jpg"
+  if [[ $? -ne 0 ]]; then
+    echo "拉取文件错误,请检测网络"
+    exit 1
+  fi
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon_new=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argon_new=y/# CONFIG_PACKAGE_luci-theme-argon_new is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，已自动删除 argon_new"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argon_new"
   fi
-
-  # 3. 冲突检测：如果你选了 argon，就自动去掉 argonne
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argonne=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argonne=y/# CONFIG_PACKAGE_luci-theme-argonne is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，已自动删除 argonne"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argonne"
   fi
 fi
 
