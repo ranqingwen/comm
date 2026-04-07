@@ -411,6 +411,33 @@ function Diy_partsh() {
     ./scripts/feeds update -a &>/dev/null
 }
 
+    # --- 强力修复：解决内核 6.12.77 版本 ssb 驱动编译报错 ---
+#    if [ -f ".config" ]; then
+#        TIME z "检测到内核版本升级(6.12.77)，正在强行屏蔽不兼容的 SSB 驱动..."
+#        
+#        # 1. 彻底从 .config 中删除 ssb 相关配置，防止被 config.txt 强行开启
+#        sed -i '/CONFIG_PACKAGE_kmod-ssb/d' .config
+#        sed -i '/CONFIG_SSB/d' .config
+#        
+#        # 2. 修改 x86 平台的内核配置模板 (这是防止配置被还原的关键)
+#        if [ -d "target/linux/x86" ]; then
+#            # 针对 6.12 路径下的所有模板强制禁用
+#            find target/linux/x86/ -name "config-6.12*" | xargs -i sed -i 's/CONFIG_SSB=y/CONFIG_SSB=n/g' {}
+#        fi
+#        
+#        # 3. 在 .config 末尾追加禁用指令，确保最终生效的是 n
+#        echo "CONFIG_PACKAGE_kmod-ssb=n" >> .config
+#        echo "CONFIG_SSB=n" >> .config
+#        echo "CONFIG_SSB_SDIOHOST=n" >> .config
+#        echo "# CONFIG_SSB is not set" >> .config
+#        
+#        TIME g "SSB 驱动已屏蔽，准备开始编译..."
+#    fi
+
+    # --- 调用中文注入函数 ---
+#    Diy_iStore_zh
+}
+
 function Diy_scripts() {
 TIME y "正在执行：更新和安装feeds"
 # 运行自定义后,检测主题是否可用
@@ -477,6 +504,33 @@ if [[ "${TARGET_BOARD}" =~ (armvirt|armsr) ]]; then
   done
 fi
 
+# 3. OAF 强力修复
+#if [[ "${Install_OAF}" == "1" ]]; then
+#  TIME g "正在执行：强力修复并拉取应用过滤 (OAF) 源码"
+#  rm -rf feeds/danshui/luci-app-oaf feeds/danshui/openappfilter
+#  find package/ -name "*oaf*" | xargs rm -rf
+#  Download_Git "https://github.com/destan19/OpenAppFilter" "package/OpenAppFilter" "all" "OpenAppFilter"
+  # 统一变量名，确保与源码 Makefile 一致
+#  sed -i '/CONFIG_PACKAGE_luci-app-oaf/d' .config
+#  sed -i '/CONFIG_PACKAGE_open-app-filter/d' .config
+#  echo "CONFIG_PACKAGE_luci-app-oaf=y" >> .config
+#  echo "CONFIG_PACKAGE_open-app-filter=y" >> .config
+#  echo "CONFIG_PACKAGE_kmod-oaf=y" >> .config
+#fi
+
+# 4. Argon Config 强力注入 (含中文语言包)
+#if [[ "${Install_Argon_Config}" == "1" ]]; then
+#  TIME g "正在执行：拉取 Argon Config 源码并注入中文配置"
+  # 清理可能存在的旧目录
+#  rm -rf package/luci-app-argon-config
+  # 使用 git clone 拉取插件源码
+#  git clone -b master https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
+  # 强制选中插件和中文包
+#  sed -i '/CONFIG_PACKAGE_luci-app-argon-config/d' .config
+#  sed -i '/CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn/d' .config
+#  echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
+#  echo "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> .config
+#fi
 
 if [[ ! -f "${HOME_PATH}/staging_dir/host/bin/upx" ]]; then
   cp -Rf /usr/bin/upx ${HOME_PATH}/staging_dir/host/bin/upx
@@ -696,6 +750,23 @@ else
   echo "去除luci-app-argon-config完成"
 fi
 
+
+# --- 模仿 OpenClash 格式添加 Argon Config ---
+#if [[ "${Install_Argon_Config}" == "1" ]]; then
+  # 1. 检查 package 目录下是否有源码，没有就强行下载
+#  if [ ! -d "${HOME_PATH}/package/luci-app-argon-config" ]; then
+#    echo "正在下载 luci-app-argon-config 源码..."
+#    git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git ${HOME_PATH}/package/luci-app-argon-config
+#  fi
+  
+  # 2. 强行往 .config 追加配置，防止被自动删除
+#  echo -e "\nCONFIG_PACKAGE_luci-app-argon-config=y" >> ${HOME_PATH}/.config
+#  echo -e "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> ${HOME_PATH}/.config
+#  echo "增加 luci-app-argon-config 完成"
+#else
+#  echo -e "\n# CONFIG_PACKAGE_luci-app-argon-config is not set" >> ${HOME_PATH}/.config
+#  echo "去除 luci-app-argon-config 完成"
+#fi
 
 
 if [[ "${Install_iStore}" == "1" ]]; then
@@ -1543,6 +1614,7 @@ Diy_profile
 function Diy_menu5() {
 cd $HOME_PATH
 Diy_management
+#Diy_iStore_zh
 Diy_definition
 Diy_prevent
 }
