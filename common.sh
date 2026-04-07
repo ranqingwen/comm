@@ -213,7 +213,7 @@ fi
 
 # 更新feeds后再次修改补充
 cd ${HOME_PATH}
-z="luci-theme-argon,luci-theme-Butterfly,luci-theme-netgear,luci-theme-atmaterial, \
+z="luci-theme-argon,luci-app-argon-config,luci-theme-Butterfly,luci-theme-netgear,luci-theme-atmaterial, \
 luci-theme-rosy,luci-theme-darkmatter,luci-theme-infinityfreedom,luci-theme-design,luci-app-design-config, \
 luci-theme-bootstrap-mod,luci-theme-freifunk-generic,luci-theme-opentomato,luci-theme-kucat, \
 luci-app-eqos,adguardhome,luci-app-adguardhome,mosdns,luci-app-mosdns,luci-app-openclash, \
@@ -302,7 +302,7 @@ if [[ -f "${HOME_PATH}/target/linux/armsr/Makefile" ]]; then
 elif [[ -f "${HOME_PATH}/target/linux/armvirt/Makefile" ]]; then
   sed -i "s?FEATURES+=.*?FEATURES+=targz?g" ${HOME_PATH}/target/linux/armvirt/Makefile
 fi
-}
+
 # 给固件保留配置更新固件的保留项目
 cat >> "${KEEPD_PATH}" <<-EOF
 /etc/config/AdGuardHome.yaml
@@ -384,59 +384,15 @@ function Diy_MT798X() {
 cd ${HOME_PATH}
 }
 
-# --- 强制预埋 iStore 简体中文包函数 ---
-#function Diy_iStore_zh() {
-#    TIME g "开始强制预埋 iStore 简体中文语言包..."
-#    
-#    # 终极方案：直接利用 base-files 核心包的 files 目录预埋，100% 成功率
-#    local I18N_DIR="${HOME_PATH}/package/base-files/files/usr/lib/lua/luci/i18n"
-#    mkdir -p "${I18N_DIR}"
-#    
-#    TIME y "正在从 common 仓库拉取 iStore.zh-cn.lmo..."
-#    wget -qO "${I18N_DIR}/iStore.zh-cn.lmo" "https://raw.githubusercontent.com/ranqingwen/common/main/language/iStore.zh-cn.lmo"
- #   
- #   if [ -s "${I18N_DIR}/iStore.zh-cn.lmo" ]; then
-#        TIME g "--> [成功] iStore 中文包已强制注入核心系统目录！"
-#    else
-#        TIME r "--> [失败] 中文包下载失败，请检查 GitHub 链接！"
-#    fi
-#}
 
 function Diy_partsh() {
-    TIME y "正在执行：自定义文件"
-    cd ${HOME_PATH}
-    
-    # 运行自定义文件
-    ${DIY_PT1_SH}
-    ./scripts/feeds update -a &>/dev/null
+TIME y "正在执行：自定义文件"
+cd ${HOME_PATH}
+# 运行自定义文件
+${DIY_PT1_SH}
+./scripts/feeds update -a &>/dev/null
 }
 
-    # --- 强力修复：解决内核 6.12.77 版本 ssb 驱动编译报错 ---
-#    if [ -f ".config" ]; then
-#        TIME z "检测到内核版本升级(6.12.77)，正在强行屏蔽不兼容的 SSB 驱动..."
-#        
-#        # 1. 彻底从 .config 中删除 ssb 相关配置，防止被 config.txt 强行开启
-#        sed -i '/CONFIG_PACKAGE_kmod-ssb/d' .config
-#        sed -i '/CONFIG_SSB/d' .config
-#        
-#        # 2. 修改 x86 平台的内核配置模板 (这是防止配置被还原的关键)
-#        if [ -d "target/linux/x86" ]; then
-#            # 针对 6.12 路径下的所有模板强制禁用
-#            find target/linux/x86/ -name "config-6.12*" | xargs -i sed -i 's/CONFIG_SSB=y/CONFIG_SSB=n/g' {}
-#        fi
-#        
-#        # 3. 在 .config 末尾追加禁用指令，确保最终生效的是 n
-#        echo "CONFIG_PACKAGE_kmod-ssb=n" >> .config
-#        echo "CONFIG_SSB=n" >> .config
-#        echo "CONFIG_SSB_SDIOHOST=n" >> .config
-#        echo "# CONFIG_SSB is not set" >> .config
-#        
-#        TIME g "SSB 驱动已屏蔽，准备开始编译..."
-#    fi
-
-    # --- 调用中文注入函数 ---
-#    Diy_iStore_zh
-}
 
 function Diy_scripts() {
 TIME y "正在执行：更新和安装feeds"
@@ -495,7 +451,6 @@ echo -e "正在编译：${TARGET_PROFILE}\n"
 
 function Diy_management() {
 cd ${HOME_PATH}
-
 # 机型为armsr_rootfs_tar_gz的时,修改cpufreq代码适配Armvirt
 if [[ "${TARGET_BOARD}" =~ (armvirt|armsr) ]]; then
   for X in $(find "${HOME_PATH}" -type d -name "luci-app-cpufreq"); do \
@@ -503,34 +458,6 @@ if [[ "${TARGET_BOARD}" =~ (armvirt|armsr) ]]; then
     sed -i 's/LUCI_DEPENDS.*/LUCI_DEPENDS:=\@\(arm\|\|aarch64\)/g' "$X/Makefile"; \
   done
 fi
-
-# 3. OAF 强力修复
-#if [[ "${Install_OAF}" == "1" ]]; then
-#  TIME g "正在执行：强力修复并拉取应用过滤 (OAF) 源码"
-#  rm -rf feeds/danshui/luci-app-oaf feeds/danshui/openappfilter
-#  find package/ -name "*oaf*" | xargs rm -rf
-#  Download_Git "https://github.com/destan19/OpenAppFilter" "package/OpenAppFilter" "all" "OpenAppFilter"
-  # 统一变量名，确保与源码 Makefile 一致
-#  sed -i '/CONFIG_PACKAGE_luci-app-oaf/d' .config
-#  sed -i '/CONFIG_PACKAGE_open-app-filter/d' .config
-#  echo "CONFIG_PACKAGE_luci-app-oaf=y" >> .config
-#  echo "CONFIG_PACKAGE_open-app-filter=y" >> .config
-#  echo "CONFIG_PACKAGE_kmod-oaf=y" >> .config
-#fi
-
-# 4. Argon Config 强力注入 (含中文语言包)
-#if [[ "${Install_Argon_Config}" == "1" ]]; then
-#  TIME g "正在执行：拉取 Argon Config 源码并注入中文配置"
-  # 清理可能存在的旧目录
-#  rm -rf package/luci-app-argon-config
-  # 使用 git clone 拉取插件源码
-#  git clone -b master https://github.com/jerrykuku/luci-app-argon-config.git package/luci-app-argon-config
-  # 强制选中插件和中文包
-#  sed -i '/CONFIG_PACKAGE_luci-app-argon-config/d' .config
-#  sed -i '/CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn/d' .config
-#  echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
-#  echo "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> .config
-#fi
 
 if [[ ! -f "${HOME_PATH}/staging_dir/host/bin/upx" ]]; then
   cp -Rf /usr/bin/upx ${HOME_PATH}/staging_dir/host/bin/upx
@@ -541,11 +468,9 @@ fi
 if [[ ! -d "${HOME_PATH}/feeds/luci/modules/luci-mod-system" ]]; then
   cd "${HOME_PATH}" && bash "$LINSHI_COMMON/language/zh-cn.sh"
 fi
-
 # files文件夹删除LICENSE,README
 [[ -d "${HOME_PATH}/files" ]] && sudo chmod +x ${HOME_PATH}/files
 rm -rf ${HOME_PATH}/files/{LICENSE,README}
-
 }
 
 function Diy_definition() {
@@ -740,49 +665,6 @@ else
   echo "去除luci-app-openclash完成"
 fi
 
-if [[ "${Install_Argon_Config}" == "1" ]]; then
-  [ ! -d "${HOME_PATH}/package/luci-app-argon-config" ] && git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git ${HOME_PATH}/package/luci-app-argon-config
-  echo -e "\nCONFIG_PACKAGE_luci-app-argon-config=y" >> ${HOME_PATH}/.config
-  echo -e "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> ${HOME_PATH}/.config
-  echo "增加luci-app-argon-config完成"
-else
-  echo -e "\n# CONFIG_PACKAGE_luci-app-argon-config is not set" >> ${HOME_PATH}/.config
-  echo "去除luci-app-argon-config完成"
-fi
-
-
-# --- 模仿 OpenClash 格式添加 Argon Config ---
-#if [[ "${Install_Argon_Config}" == "1" ]]; then
-  # 1. 检查 package 目录下是否有源码，没有就强行下载
-#  if [ ! -d "${HOME_PATH}/package/luci-app-argon-config" ]; then
-#    echo "正在下载 luci-app-argon-config 源码..."
-#    git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git ${HOME_PATH}/package/luci-app-argon-config
-#  fi
-  
-  # 2. 强行往 .config 追加配置，防止被自动删除
-#  echo -e "\nCONFIG_PACKAGE_luci-app-argon-config=y" >> ${HOME_PATH}/.config
-#  echo -e "CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y" >> ${HOME_PATH}/.config
-#  echo "增加 luci-app-argon-config 完成"
-#else
-#  echo -e "\n# CONFIG_PACKAGE_luci-app-argon-config is not set" >> ${HOME_PATH}/.config
-#  echo "去除 luci-app-argon-config 完成"
-#fi
-
-
-if [[ "${Install_iStore}" == "1" ]]; then
-  # 1. 强行在 feeds.conf.default 插入官方独立源（确保它是最新的且语言包正确）
-  sed -i '/istore/d' feeds.conf.default
-  echo "src-git istore https://github.com/linkease/istore;main" >> feeds.conf.default
-  
-  # 2. 强行写入 .config 开关
-  echo -e "\nCONFIG_PACKAGE_luci-app-store=y" >> ${HOME_PATH}/.config
-  echo -e "CONFIG_PACKAGE_luci-i18n-store-zh-cn=y" >> ${HOME_PATH}/.config
-  echo "增加 luci-app-store(iStore) 完成"
-else
-  echo -e "\n# CONFIG_PACKAGE_luci-app-store is not set" >> ${HOME_PATH}/.config
-  echo "去除 luci-app-store 完成"
-fi
-
 
 if [[ "${Disable_autosamba}" == "1" ]]; then
 sed -i '/samba/d;/SAMBA/d' "${HOME_PATH}/.config"
@@ -952,7 +834,6 @@ CONFIG_PACKAGE_luci=y
 CONFIG_PACKAGE_luci-base=y
 CONFIG_PACKAGE_luci-compat=y
 CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
-CONFIG_PACKAGE_luci-i18n-store-zh-cn=y
 CONFIG_PACKAGE_luci-lib-ipkg=y
 CONFIG_PACKAGE_default-settings=y
 CONFIG_PACKAGE_default-settings-chn=y
@@ -1198,35 +1079,21 @@ if [[ `grep -c "CONFIG_PACKAGE_luci-app-dockerman=y" ${HOME_PATH}/.config` -eq '
   echo "# CONFIG_PACKAGE_runc is not set" >> ${HOME_PATH}/.config
 fi
 
-# 1. 进入 Argon 主题处理逻辑
 if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon=y" ${HOME_PATH}/.config` -eq '1' ]]; then
-  TIME g "正在预埋 Argon 主题自定义背景..."
-  
-  # 定义固件内的目标目录
-  local TARGET_DIR="${HOME_PATH}/files/www/luci-static/argon/background"
-  [[ ! -d "${TARGET_DIR}" ]] && mkdir -p "${TARGET_DIR}"
-  
-  # 【修改部分】：直接使用你改名后的 argon.jpg，不再使用随机数 pmg
-  if [ -f "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" ]; then
-    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/argon.jpg" "${TARGET_DIR}/argon.jpg"
-    TIME g "--> [成功] 自定义背景已注入: argon.jpg"
-  elif [ -f "$LINSHI_COMMON/Share/argon/jpg/1.jpg" ]; then
-    cp -Rf "$LINSHI_COMMON/Share/argon/jpg/1.jpg" "${TARGET_DIR}/argon.jpg"
-    TIME g "--> [成功] 检测到 1.jpg，已重命名并注入为 argon.jpg"
-  else
-    TIME r "--> [失败] 未能在 $LINSHI_COMMON/Share/argon/jpg/ 下找到背景源文件！"
+  pmg="$(date +%M | grep -o '.$').jpg"
+  [[ ! -d "${HOME_PATH}/files/www/luci-static/argon/background" ]] && mkdir -p "${HOME_PATH}/files/www/luci-static/argon/background"
+  cp -Rf "$LINSHI_COMMON/Share/argon/jpg/${pmg}" "${HOME_PATH}/files/www/luci-static/argon/background/argon.jpg"
+  if [[ $? -ne 0 ]]; then
+    echo "拉取文件错误,请检测网络"
+    exit 1
   fi
-
-  # 2. 冲突检测：如果你选了 argon，就自动去掉 argon_new
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argon_new=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argon_new=y/# CONFIG_PACKAGE_luci-theme-argon_new is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，已自动删除 argon_new"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argon_new，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argon_new"
   fi
-
-  # 3. 冲突检测：如果你选了 argon，就自动去掉 argonne
   if [[ `grep -c "CONFIG_PACKAGE_luci-theme-argonne=y" ${HOME_PATH}/.config` -eq '1' ]]; then
     sed -i 's/CONFIG_PACKAGE_luci-theme-argonne=y/# CONFIG_PACKAGE_luci-theme-argonne is not set/g' ${HOME_PATH}/.config
-    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，已自动删除 argonne"
+    TIME r "您同时选择luci-theme-argon和luci-theme-argonne，插件有冲突，相同功能插件只能二选一，已删除luci-theme-argonne"
   fi
 fi
 
@@ -1406,6 +1273,8 @@ sed -i -E '/^\t/! s/^ +//' "${DEFAULT_PATH}"
 ! grep -q "exit 0" "$DEFAULT_PATH" && sed -i '$a\exit 0' "${DEFAULT_PATH}"
 }
 
+
+
 function Diy_firmware() {
 # 远程更新处理固件
 if [ "${UPDATE_FIRMWARE_ONLINE}" == "true" ]; then
@@ -1446,8 +1315,7 @@ done
 TIME g "整理后的文件"
 ls -1
 if ! echo "$TARGET_BOARD" | grep -Eq 'armvirt|armsr'; then
-  # 使用 TARGET_PROFILE 动态匹配，并直接替换掉冗长的中间后缀
-  rename "s/openwrt-x86-64-generic-squashfs-combined/${GUJIAN_DATE}-${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}/" *
+  rename "s/^openwrt/${GUJIAN_DATE}-${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}/" *
   TIME g "更改名称后的固件，也是最终上传使用的"
   ls -1
 fi
@@ -1456,6 +1324,7 @@ echo "DATE=$(date "+%Y%m%d%H%M%S")" >> ${GITHUB_ENV}
 echo "TONGZHI_DATE=$(date +%Y年%m月%d日)" >> ${GITHUB_ENV}
 echo "FIRMWARE_DATE=$(date +%Y-%m%d-%H%M)" >> ${GITHUB_ENV}
 }
+
 
 function gitsvn() {
 local url="${1%.git}"
@@ -1614,7 +1483,6 @@ Diy_profile
 function Diy_menu5() {
 cd $HOME_PATH
 Diy_management
-#Diy_iStore_zh
 Diy_definition
 Diy_prevent
 }
