@@ -409,6 +409,7 @@ function Diy_partsh() {
     # 运行自定义文件
     ${DIY_PT1_SH}
     ./scripts/feeds update -a &>/dev/null
+}
 
 function Diy_scripts() {
 TIME y "正在执行：更新和安装feeds"
