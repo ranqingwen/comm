@@ -31,26 +31,9 @@ COOLSNOWWOLF)
   variable REPO_URL="https://github.com/coolsnowwolf/lede"
   variable SOURCE="Lede"
   variable SOURCE_OWNER="Lean"
+  variable LUCI_EDITION="23.05"
   variable DISTRIB_SOURCECODE="lede"
-  # 优先尝试从源码文件中自动获取版本号
-  if [ -f "package/base-files/files/etc/openwrt_release" ]; then
-    variable LUCI_EDITION="$(grep "DISTRIB_RELEASE" package/base-files/files/etc/openwrt_release | cut -d "'" -f2)"
-  else
-    variable LUCI_EDITION="$(echo "${REPO_BRANCH}" | sed 's/openwrt-//g')"
-  fi
-  # 修改默认显示值为 24.10
-  [ -z "${LUCI_EDITION}" ] || [ "${LUCI_EDITION}" == "master" ] && variable LUCI_EDITION="24.10"
-  
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
-
-  # 【核心修改：执行文件写入】
-  # 1. 即使不改变量，我们也强行把系统标识改为 Lean
-  sed -i "s/DISTRIB_REVISION='.*'/DISTRIB_REVISION='${SOURCE_OWNER}'/g" package/base-files/files/etc/openwrt_release
-  
-  # 2. 这里的顺序很关键：把 / Lede 放在最后。
-  # 大多数主题（如 Argon）会自动截取 @OpenWrt 之前的内容显示在登录页和底部。
-  # 注意：@OpenWrt 之间没有空格，日期前加了 R
-  sed -i "s/DISTRIB_DESCRIPTION='.*'/DISTRIB_DESCRIPTION='${SOURCE} by ranqw R${UPGRADE_DATE} @OpenWrt ${DISTRIB_REVISION} \/ ${SOURCE} - ${LUCI_EDITION}'/g" package/base-files/files/etc/openwrt_release
 ;;
 LIENOL)
   variable REPO_URL="https://github.com/Lienol/openwrt"
@@ -566,10 +549,22 @@ fi
 if [[ "${Customized_Information}" == "0" ]] || [[ -z "${Customized_Information}" ]]; then
   echo "不进行,个性签名设置"
 elif [[ -n "${Customized_Information}" ]]; then
-  echo "[ -f '/usr/lib/os-release' ] && sed -i \"s?RELEASE=.*?RELEASE=\\\"${Customized_Information} @ OpenWrt\\\"?g\" '/usr/lib/os-release'" >> "${DEFAULT_PATH}"
+  # 1. 提取源码原始版本信息 (例如: R26.02.20 / Lede - 23.05)
+  # 注意：这里增加一个判断，防止文件不存在时报错
+  local full_ver=$(grep "DISTRIB_DESCRIPTION" package/base-files/files/etc/openwrt_release | cut -d"'" -f2)
+  # 2. 提取简称 (只拿第一个空格前的部分，即 R26.02.20)
+  local short_ver=$(echo "${full_ver}" | cut -d' ' -f1)
+
+  # 3. 注入到 99-first-run 脚本中 (即 ${DEFAULT_PATH})
+  
+  # 修改固件版本栏 (全称)
+  echo "[ -f '/usr/lib/os-release' ] && sed -i \"s?RELEASE=.*?RELEASE=\\\"${Customized_Information} @OpenWrt ${full_ver}\\\"?g\" '/usr/lib/os-release'" >> "${DEFAULT_PATH}"
+  
+  # 修改右下角和登录页 (简称)
   echo "sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release" >> "${DEFAULT_PATH}"
-  echo "echo \"DISTRIB_DESCRIPTION='${Customized_Information} @ OpenWrt '\" >> /etc/openwrt_release" >> "${DEFAULT_PATH}"
-  echo "个性签名[${Customized_Information}]增加完成"
+  echo "echo \"DISTRIB_DESCRIPTION='${Customized_Information} @OpenWrt ${short_ver}'\" >> /etc/openwrt_release" >> "${DEFAULT_PATH}"
+  
+  echo "个性签名[${Customized_Information}]设置完成"
 fi
 
 if [[ -n "${Kernel_partition_size}" ]] && [[ "${Kernel_partition_size}" != "0" ]]; then
