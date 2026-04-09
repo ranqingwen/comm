@@ -549,28 +549,27 @@ fi
 if [[ "${Customized_Information}" == "0" ]] || [[ -z "${Customized_Information}" ]]; then
   echo "不进行,个性签名设置"
 elif [[ -n "${Customized_Information}" ]]; then
-  # 1. 从源码文件中提取原始版本描述（例如：'R26.02.20 / Lede - 23.05'）
+  # 1. 提取源码原始版本信息 (例如: ' %V %D R26.02.20 / Lede - 23.05')
   # - cut: 去掉单引号
-  # - sed 's/%D//g': 强制删除残留的 %D 占位符
+  # - sed 's/%V//g; s/%D//g': 同时强制删除 %V 和 %D 占位符
   # - sed 's/^[[:space:]]*//': 移除开头可能出现的空格，确保拼接时紧凑
-  local full_ver=$(grep "DISTRIB_DESCRIPTION" package/base-files/files/etc/openwrt_release | cut -d"'" -f2 | sed 's/%D//g' | sed 's/^[[:space:]]*//')
+  local full_ver=$(grep "DISTRIB_DESCRIPTION" package/base-files/files/etc/openwrt_release | cut -d"'" -f2 | sed 's/%V//g; s/%D//g; s/^[[:space:]]*//')
 
-  # 2. 提取简称（只取第一个空格前的字符，例如：R26.02.20）
+  # 2. 提取简称 (只取第一个空格前的字符，例如：R26.02.20)
   local short_ver=$(echo "${full_ver}" | cut -d' ' -f1)
 
-  # 3. 将修改指令注入到 99-first-run 脚本中，确保固件启动时生效
-  
-  # --- 设置固件版本栏 (系统 -> 状态 页面显示的内容) ---
-  # 目标格式：个性签名 @OpenWrt R26.02.20 / Lede - 23.05
+  # 3. 将修改指令注入到 99-first-run 脚本中 (即 ${DEFAULT_PATH})
+
+  # --- 设置固件版本栏 (显示全称) ---
+  # 格式：Lede by ranqw R2026.04.09 @OpenWrt R26.02.20 / Lede - 23.05
   echo "[ -f '/usr/lib/os-release' ] && sed -i \"s?RELEASE=.*?RELEASE=\\\"${Customized_Information} @OpenWrt ${full_ver}\\\"?g\" '/usr/lib/os-release'" >> "${DEFAULT_PATH}"
   
-  # --- 设置右下角及登录页显示内容 ---
-  # 逻辑：先删除原有的描述行，再重新写入去掉 %D 并加上个签的内容
-  # 目标格式：个性签名 @OpenWrt R26.02.20
+  # --- 设置右下角及登录页显示内容 (显示简称) ---
+  # 格式：Lede by ranqw R2026.04.09 @OpenWrt R26.02.20
   echo "sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release" >> "${DEFAULT_PATH}"
   echo "echo \"DISTRIB_DESCRIPTION='${Customized_Information} @OpenWrt ${short_ver}'\" >> /etc/openwrt_release" >> "${DEFAULT_PATH}"
   
-  echo "个性签名 [${Customized_Information}] 设置完成（已自动剔除 %D 并区分长短版本）"
+  echo "个性签名 [${Customized_Information}] 设置完成（已剔除 %V/%D 并区分长短版本）"
 fi
 
 if [[ -n "${Kernel_partition_size}" ]] && [[ "${Kernel_partition_size}" != "0" ]]; then
