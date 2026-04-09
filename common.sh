@@ -549,27 +549,24 @@ fi
 if [[ "${Customized_Information}" == "0" ]] || [[ -z "${Customized_Information}" ]]; then
   echo "不进行,个性签名设置"
 elif [[ -n "${Customized_Information}" ]]; then
-  # 1. 提取源码原始版本信息 (例如: ' %V %D R26.02.20 / Lede - 23.05')
-  # - cut: 去掉单引号
-  # - sed 's/%V//g; s/%D//g': 同时强制删除 %V 和 %D 占位符
-  # - sed 's/^[[:space:]]*//': 移除开头可能出现的空格，确保拼接时紧凑
-  local full_ver=$(grep "DISTRIB_DESCRIPTION" package/base-files/files/etc/openwrt_release | cut -d"'" -f2 | sed 's/%V//g; s/%D//g; s/^[[:space:]]*//')
+  # 1. 提取源码原始版本信息
+  # - sed 's/%[A-Z]//g': 这是一个通配逻辑，会直接删掉所有 %C, %V, %D, %R 等占位符
+  # - sed 's/^[[:space:]]*//;s/[[:space:]]*$//': 删掉首尾可能多出来的空格
+  local full_ver=$(grep "DISTRIB_DESCRIPTION" package/base-files/files/etc/openwrt_release | cut -d"'" -f2 | sed 's/%[A-Z]//g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
-  # 2. 提取简称 (只取第一个空格前的字符，例如：R26.02.20)
+  # 2. 提取简称 (只拿第一个空格前的部分)
   local short_ver=$(echo "${full_ver}" | cut -d' ' -f1)
 
-  # 3. 将修改指令注入到 99-first-run 脚本中 (即 ${DEFAULT_PATH})
-
-  # --- 设置固件版本栏 (显示全称) ---
-  # 格式：Lede by ranqw R2026.04.09 @OpenWrt R26.02.20 / Lede - 23.05
+  # 3. 注入到 99-first-run 脚本中
+  
+  # 修改固件版本栏 (全称)
   echo "[ -f '/usr/lib/os-release' ] && sed -i \"s?RELEASE=.*?RELEASE=\\\"${Customized_Information} @OpenWrt ${full_ver}\\\"?g\" '/usr/lib/os-release'" >> "${DEFAULT_PATH}"
   
-  # --- 设置右下角及登录页显示内容 (显示简称) ---
-  # 格式：Lede by ranqw R2026.04.09 @OpenWrt R26.02.20
+  # 修改右下角和登录页 (简称)
   echo "sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release" >> "${DEFAULT_PATH}"
   echo "echo \"DISTRIB_DESCRIPTION='${Customized_Information} @OpenWrt ${short_ver}'\" >> /etc/openwrt_release" >> "${DEFAULT_PATH}"
   
-  echo "个性签名 [${Customized_Information}] 设置完成（已剔除 %V/%D 并区分长短版本）"
+  echo "个性签名[${Customized_Information}]设置完成 (已清理所有 % 占位符)"
 fi
 
 if [[ -n "${Kernel_partition_size}" ]] && [[ "${Kernel_partition_size}" != "0" ]]; then
@@ -1342,9 +1339,6 @@ sed -i '/^$/d' "${CONFIG_TXT}"
 # 前面修改的文件改回去
 sed -i -E '/^\t/! s/^ +//' "${DEFAULT_PATH}"
 ! grep -q "exit 0" "$DEFAULT_PATH" && sed -i '$a\exit 0' "${DEFAULT_PATH}"
-}
-
-
 
 function Diy_firmware() {
 # 远程更新处理固件
@@ -1352,8 +1346,10 @@ if [ "${UPDATE_FIRMWARE_ONLINE}" == "true" ]; then
   cd ${HOME_PATH}
   source $UPGRADE_SH && Diy_Part3
 fi
+
 # 编译完毕后,整理固件
 cd ${FIRMWARE_PATH}
+
 # 打包所有ipk或者apk插件
 if find "${HOME_PATH}/bin/packages/" -type f -name "*.ipk" | grep -q .; then
     mkdir -p ipk
@@ -1362,6 +1358,7 @@ elif find "${HOME_PATH}/bin/packages/" -type f -name "*.apk" | grep -q .; then
     mkdir -p apk
     find "${HOME_PATH}/bin/packages/" -type f -name "*.apk" -exec mv {} apk/ \;
 fi
+
 if [ -d "ipk" ]; then
     sync
     tar -czf ipk.tar.gz ipk
@@ -1390,18 +1387,25 @@ ls -1
 # 确保获取到内核版本（如果环境变量中未定义）
 [ -z "${LINUX_KERNEL}" ] && export LINUX_KERNEL="$(grep -Po 'LINUX_VERSION:=\K.*' ${HOME_PATH}/include/kernel-version.mk)"
 
+# --- 核心修改：仅保留固件重命名逻辑 (点号方案：月.日.时.分) ---
 if ! echo "$TARGET_BOARD" | grep -Eq 'armvirt|armsr'; then
-  # 1. 首先处理 UEFI 固件：将带 -efi 后缀的文件重命名为 -uefi 格式
-  rename "s/openwrt-x86-64-generic-squashfs-combined-efi/${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}-${GUJIAN_DATE}-uefi/" *
+  # 定义精确到分钟的时间变量 (格式：04.09.22.38)
+  # 使用 TZ=UTC-8 确保获取北京时间
+  local GUJIAN_TIME=$(TZ=UTC-8 date "+%m.%d.%H.%M")
+
+  # 1. 处理 UEFI 固件
+  # 命名示例：Lede-24.10-6.12.80-x86-64-04.09.22.38-uefi
+  rename "s/openwrt-x86-64-generic-squashfs-combined-efi/${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}-${GUJIAN_TIME}-uefi/" *
   
-  # 2. 然后处理 BIOS 固件：将剩余的 combined.img.gz 文件重命名为 -bios 格式
-  # 注意：这里使用特定的后缀匹配，避免干扰已更名的 UEFI 文件
-  rename "s/openwrt-x86-64-generic-squashfs-combined.img.gz/${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}-${GUJIAN_DATE}-bios.img.gz/" *
+  # 2. 处理 BIOS 固件
+  # 命名示例：Lede-24.10-6.12.80-x86-64-04.09.22.38-bios.img.gz
+  rename "s/openwrt-x86-64-generic-squashfs-combined.img.gz/${SOURCE}-${LUCI_EDITION}-${LINUX_KERNEL}-${TARGET_PROFILE}-${GUJIAN_TIME}-bios.img.gz/" *
   
-  TIME g "更改名称后的固件，也是最终上传使用的"
+  TIME g "固件名称重命名完成 (点号连接格式)"
   ls -1
 fi
 
+# 记录环境变量供后续上传步骤使用
 echo "DATE=$(date "+%Y%m%d%H%M%S")" >> ${GITHUB_ENV}
 echo "TONGZHI_DATE=$(date +%Y年%m月%d日)" >> ${GITHUB_ENV}
 echo "FIRMWARE_DATE=$(date +%Y-%m%d-%H%M)" >> ${GITHUB_ENV}
