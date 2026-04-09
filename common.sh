@@ -32,7 +32,7 @@ COOLSNOWWOLF)
   variable SOURCE="Lede"
   variable SOURCE_OWNER="Lean"
   variable DISTRIB_SOURCECODE="lede"
-  variable LUCI_EDITION="$(echo "${REPO_BRANCH}" |sed 's/openwrt-//g')"
+  variable LUCI_EDITION="24.10"
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
 ;;
 LIENOL)
