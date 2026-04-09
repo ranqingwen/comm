@@ -31,8 +31,17 @@ COOLSNOWWOLF)
   variable REPO_URL="https://github.com/coolsnowwolf/lede"
   variable SOURCE="Lede"
   variable SOURCE_OWNER="Lean"
-  variable LUCI_EDITION="23.05"
   variable DISTRIB_SOURCECODE="lede"
+  # 优先尝试从源码文件中自动获取版本号，获取不到则根据分支名处理
+  if [ -f "package/base-files/files/etc/openwrt_release" ]; then
+    variable LUCI_EDITION="$(grep "DISTRIB_RELEASE" package/base-files/files/etc/openwrt_release | cut -d "'" -f2)"
+  else
+    # 如果文件不存在，则套用你其他源码的格式，移除分支名中的 openwrt- 前缀
+    variable LUCI_EDITION="$(echo "${REPO_BRANCH}" | sed 's/openwrt-//g')"
+  fi
+  # 如果结果为空（比如 master 分支），则给一个默认显示值
+  [ -z "${LUCI_EDITION}" ] || [ "${LUCI_EDITION}" == "master" ] && variable LUCI_EDITION="24"
+
   variable GENE_PATH="${HOME_PATH}/package/base-files/files/bin/config_generate"
 ;;
 LIENOL)
