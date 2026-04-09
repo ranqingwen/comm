@@ -1339,6 +1339,8 @@ sed -i '/^$/d' "${CONFIG_TXT}"
 # 前面修改的文件改回去
 sed -i -E '/^\t/! s/^ +//' "${DEFAULT_PATH}"
 ! grep -q "exit 0" "$DEFAULT_PATH" && sed -i '$a\exit 0' "${DEFAULT_PATH}"
+}
+
 
 function Diy_firmware() {
 # 远程更新处理固件
