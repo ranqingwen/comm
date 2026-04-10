@@ -679,6 +679,30 @@ else
   echo "去除luci-app-openclash完成"
 fi
 
+# 下载 Clash 内核和 GeoIP、GeoSite 数据文件
+if [[ "${Clash_Core}" == "1" ]]; then
+    TIME y "正在执行：下载 Clash 内核及数据文件..."
+    # 创建存放目录
+    mkdir -p "${HOME_PATH}/files/etc/openclash/core"
+
+    # 定义下载地址（引用自 preset-clash-core.sh）
+    CLASH_META_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${Clash_Arch}.tar.gz"
+    GEOIP_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+    GEOSITE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+
+    # 执行下载并解压内核
+    wget -qO- $CLASH_META_URL | tar xOvz > "${HOME_PATH}/files/etc/openclash/core/clash_meta"
+    # 下载数据文件
+    wget -qO- $GEOIP_URL > "${HOME_PATH}/files/etc/openclash/GeoIP.dat"
+    wget -qO- $GEOSITE_URL > "${HOME_PATH}/files/etc/openclash/GeoSite.dat"
+
+    # 赋予执行权限
+    chmod +x "${HOME_PATH}/files/etc/openclash/core/clash*"
+    echo "Clash 内核(${Clash_Arch})及 GeoIP/GeoSite 下载完成"
+else
+    echo "跳过 Clash 内核下载"
+fi
+
 if [[ "${Install_Argon_Config}" == "1" ]]; then
   [ ! -d "${HOME_PATH}/package/luci-app-argon-config" ] && git clone --depth 1 https://github.com/jerrykuku/luci-app-argon-config.git ${HOME_PATH}/package/luci-app-argon-config
   echo -e "\nCONFIG_PACKAGE_luci-app-argon-config=y" >> ${HOME_PATH}/.config
