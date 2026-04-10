@@ -44,7 +44,7 @@ function Diy_Part2() {
 	case "${TARGET_BOARD}" in
 	ramips | reltek | ath* | ipq* | bmips | kirkwood | mediatek |bcm4908 |gemini |lantiq |layerscape |qualcommax |qualcommbe |siflower |silicon)
 		export FIRMWARE_SUFFIX=".bin"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
  	bcm47xx)
           	if echo "$TARGET_PROFILE" | grep -Eq 'asus'; then
@@ -54,20 +54,20 @@ function Diy_Part2() {
 		else
 			export FIRMWARE_SUFFIX=".bin"
 		fi
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	x86)
 		export FIRMWARE_SUFFIX=".img.gz"
-		export AUTOBUILD_FIRMWARE_UEFI="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE_UEFI="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	rockchip | bcm27xx | mxs | sunxi | zynq |loongarch64 |omap |sifiveu |tegra |amlogic)
 		export FIRMWARE_SUFFIX=".img.gz"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	mvebu)
 		export FIRMWARE_SUFFIX=".img.gz"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	bcm53xx)
  		if echo "$TARGET_PROFILE" | grep -Eq 'mr32|tplink|dlink'; then
@@ -79,15 +79,15 @@ function Diy_Part2() {
 		else
 			export FIRMWARE_SUFFIX=".trx"
 		fi
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	octeon | oxnas | pistachio)
 		export FIRMWARE_SUFFIX=".tar"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	*)
 		export FIRMWARE_SUFFIX=".bin"
-		export AUTOBUILD_FIRMWARE="${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
+		export AUTOBUILD_FIRMWARE="${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}-${UPGRADE_DATE}"
 	;;
 	esac
 	
@@ -130,7 +130,7 @@ function Diy_Part2() {
   	echo "UPDATE_TAG=\"${UPDATE_TAG}\"" >> "${GITHUB_WORKSPACE}/del_assets"
   	echo "BOOT_TYPE=\"${BOOT_TYPE}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 	echo "FIRMWARE_SUFFIX=\"${FIRMWARE_SUFFIX}\"" >> "${GITHUB_WORKSPACE}/del_assets"
- 	echo "FIRMWARE_PROFILEER=\"${LUCI_EDITION}-${SOURCE}-${TARGET_PROFILE_ER}\"" >> "${GITHUB_WORKSPACE}/del_assets"
+ 	echo "FIRMWARE_PROFILEER=\"${SOURCE}-${LUCI_EDITION}-${TARGET_PROFILE_ER}\"" >> "${GITHUB_WORKSPACE}/del_assets"
 }
 
 function Diy_Part3() {
