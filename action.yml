@@ -8,10 +8,10 @@ runs:
       run: |
         cd $HOME_PATH
         if [[ -n "${{ env.TARGET_PROFILE_IMG }}" ]]; then
-           echo "SHANGCHUAN_MINGCHEN=${{ env.SOURCE }}-${{ env.LUCI_EDITION }}-${{ env.TARGET_PROFILE_IMG }}" >> ${GITHUB_ENV}
+           echo "SHANGCHUAN_MINGCHEN=${{ env.SOURCE }}-${{ env.LUCI_EDITION }}" >> ${GITHUB_ENV}
            echo "RR_RELEASE=b" >> ${GITHUB_ENV}
         else
-           echo "SHANGCHUAN_MINGCHEN=${{ env.SOURCE }}-${{ env.LUCI_EDITION }}-${{ env.TARGET_PROFILE }}" >> ${GITHUB_ENV}
+           echo "SHANGCHUAN_MINGCHEN=${{ env.SOURCE }}-${{ env.LUCI_EDITION }}" >> ${GITHUB_ENV}
            echo "RR_RELEASE=a" >> ${GITHUB_ENV}
         fi
         [[ -z "${DATE}" ]] && echo "DATE=$(date "+%Y%m%d%H%M%S")" >> ${GITHUB_ENV}
@@ -33,34 +33,58 @@ runs:
       run: |
         cd $HOME_PATH
         echo "SHANG_MESSAGE=、上传Artifacts" >> ${GITHUB_ENV}
+
+    - name: 生成发布标签与说明
+      if: env.UPLOAD_RELEASE == 'true'
+      shell: bash
+      run: |
+        # 1. 提取内核版本 (从编译生成的 manifest 文件)
+        cd $HOME_PATH/bin/targets/*/*
+        KERNEL_VER=$(cat *.manifest | grep ^kernel | cut -d- -f2 | tr -d ' ')
+        echo "KERNEL=$KERNEL_VER" >> ${GITHUB_ENV}
+        
+        # 2. 提取后台 IP 地址
+        LAN_IP=$(grep "ipaddr:-" ${HOME_PATH}/package/base-files/files/bin/config_generate | grep -v 'addr_offset' | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | head -n1)
+        [[ -z "$LAN_IP" ]] && LAN_IP="192.168.1.1"
+        
+        # 3. 写入动态说明文件 (release.txt)
+        echo "### 📒 固件信息" > release.txt
+        echo "- ♨️【${{ env.SOURCE }}】固件编译完成" >> release.txt
+        echo "- 🎯 固件名称: ${{ env.SOURCE }}" >> release.txt
+        echo "- 💄 固件版本: ${{ env.LUCI_EDITION }}" >> release.txt
+        echo "- 🚀 内核版本: $KERNEL_VER" >> release.txt
+        echo "- 💻 平台架构: ${{ env.TARGET_PROFILE }}" >> release.txt
+        echo "- 🌐 默认地址: $LAN_IP" >> release.txt
+        echo "- 🧑‍💼 默认账号: root" >> release.txt
+        echo "- 🔑 默认密码: 无密码" >> release.txt
+        echo "- 📅 编译时间: ${{ env.TZ_Message }}" >> release.txt
+        echo "----------------------------------------" >> release.txt
+        echo "- ⚽ 编译日志请查看 Actions 构建详情" >> release.txt
     
     - name: 发布固件
       id: fabu
       if: env.UPLOAD_RELEASE == 'true' && env.RR_RELEASE == 'a'
       uses: ncipollo/release-action@v1
       with:
-        name: ${{ env.SHANGCHUAN_MINGCHEN }}
-        tag: a${{ env.DATE }}
+        # 标题改成: Lede-2026-0410-1530
+        name: ${{ env.SOURCE }}-${{ env.FIRMWARE_DATE }}
+        tag: ${{ env.FIRMWARE_DATE }}
         token: ${{ env.REPO_TOKEN }}
         allowUpdates: true
-        body: ${{ env.TONGZHI_DATE }}
+        bodyFile: release.txt
         artifacts: "${{ env.FIRMWARE_PATH }}/*"
 
-    - name: 发布固件到 Github Releases
+    - name: 发布固件到 Github Releases (Amlogic)
       id: nfabu
       if: env.UPLOAD_RELEASE == 'true' && env.RR_RELEASE == 'b'
       uses: ncipollo/release-action@v1
       with:
-        name: ${{ env.amlogic_model }}
-        tag: a${{ env.DATE }}
+        name: ${{ env.amlogic_model }}-${{ env.FIRMWARE_DATE }}
+        tag: ${{ env.FIRMWARE_DATE }}
         token: ${{ env.REPO_TOKEN }}
         allowUpdates: true
         artifacts: "${{ env.FIRMWARE_PATH }}/*"
-        body: |
-          发布日期：${{ env.FIRMWARE_DATE }}
-          固件源码：${{ env.SOURCE }}
-          内核仓库：${{ env.kernel_usage }}
-          写入EMMC：Login to OpenWrt → System → Amlogic Service → Install OpenWrt
+        bodyFile: release.txt
 
     - name: 发布信息
       if: steps.fabu.outcome == 'success' && env.UPLOAD_RELEASE == 'true' || steps.nfabu.outcome == 'success' && env.UPLOAD_RELEASE == 'true'
@@ -80,6 +104,3 @@ runs:
         if [[ "${{ env.INFORMATION_NOTICE }}" == "PUSH" ]]; then
            curl -s -X POST -H "Content-Type: application/json" -d '{"token":"${{env.PUSH_PLUS_TOKEN}}","title":"${{env.SOURCE}}-${{env.LUCI_EDITION}}","content":"${{env.TARGET_PROFILE}}固件，编译${{env.DABAO_MESSAGE}}${{env.SHANG_MESSAGE}}${{env.FABU_MESSAGE}}${{env.YUNDUAN_MESSAGE}}成功，✌️💐(${{env.WAREHOUSE_MAN}}-#${{env.RUN_NUMBER}})，${{env.TZ_Message}}💯"}' https://www.pushplus.plus/send
         fi
-branding:
-  icon: "terminal"
-  color: "gray-dark"
